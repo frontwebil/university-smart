@@ -2,24 +2,11 @@ import { Decimal } from "@prisma/client/runtime/library";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { AddGradeForm } from "@/components/add-grade-form";
-import { EditGradeDialog } from "@/components/edit-grade-dialog";
-import { DeleteGradeButton } from "@/components/delete-grade-button";
-import {
-  scoreToEcts,
-  scoreToNational,
-  ectsColor,
-  scoreColor,
-} from "@/lib/grades";
-import { formatDateShort } from "@/lib/utils";
+import { GradeJournal } from "@/components/grade-journal";
 import {
   Users,
-  BookOpen,
   Award,
   TrendingUp,
   BarChart3,
@@ -77,6 +64,22 @@ export function TeacherView({
       ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length)
       : 0;
   const excellentCount = allScores.filter((s) => s >= 90).length;
+
+  // Flatten data into rows for the client-side GradeJournal
+  const rows = students.flatMap((student) =>
+    student.grades.map((grade) => ({
+      gradeId: grade.id,
+      score: grade.score,
+      gradeType: grade.gradeType,
+      date: grade.date.toISOString(),
+      subjectId: grade.subject.id,
+      subjectTitle: grade.subject.title,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentTicket: student.studentTicket,
+      groupName: student.group.name,
+    }))
+  );
 
   return (
     <div className="space-y-6">
@@ -138,219 +141,8 @@ export function TeacherView({
       {/* Add Grade Form */}
       <AddGradeForm students={allStudents} subjects={subjects} />
 
-      {/* All Students Grades */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            Журнал оцінок — Усі студенти
-          </CardTitle>
-          <CardDescription>
-            Повний перелік студентів та їх результатів оцінювання
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Desktop Table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Студент
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Група
-                  </th>
-                  <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Дисципліна
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Тип
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Бал
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    ECTS
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Національна
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Дата
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Дії
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {students.flatMap((student) =>
-                  student.grades.map((grade) => {
-                    const ects = scoreToEcts(grade.score);
-                    const national = scoreToNational(grade.score);
-                    return (
-                      <tr
-                        key={grade.id}
-                        className="hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="p-3">
-                          <div className="font-medium text-sm">
-                            {student.fullName}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {student.studentTicket}
-                          </div>
-                        </td>
-                        <td className="p-3 text-center">
-                          <Badge variant="secondary" className="text-xs">
-                            {student.group.name}
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-sm">
-                          {grade.subject.title}
-                        </td>
-                        <td className="p-3 text-center">
-                          <Badge variant="outline" className="text-xs">
-                            {grade.gradeType}
-                          </Badge>
-                        </td>
-                        <td
-                          className={`p-3 text-center font-bold text-lg ${scoreColor(grade.score)}`}
-                        >
-                          {grade.score}
-                        </td>
-                        <td className="p-3 text-center">
-                          <span
-                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${ectsColor(ects)}`}
-                          >
-                            {ects}
-                          </span>
-                        </td>
-                        <td className="p-3 text-center text-sm">
-                          {national}
-                        </td>
-                        <td className="p-3 text-center text-sm text-muted-foreground">
-                          {formatDateShort(grade.date)}
-                        </td>
-                        <td className="p-3 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <EditGradeDialog
-                              grade={{
-                                id: grade.id,
-                                score: grade.score,
-                                gradeType: grade.gradeType,
-                              }}
-                              studentName={student.fullName}
-                              subjectTitle={grade.subject.title}
-                            />
-                            <DeleteGradeButton
-                              gradeId={grade.id}
-                              studentName={student.fullName}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="sm:hidden space-y-3">
-            {students.flatMap((student) =>
-              student.grades.map((grade) => {
-                const ects = scoreToEcts(grade.score);
-                const national = scoreToNational(grade.score);
-                return (
-                  <div
-                    key={grade.id}
-                    className="rounded-lg border bg-white p-4 space-y-3 shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="font-semibold text-sm">
-                          {student.fullName}
-                        </h4>
-                        <p className="text-xs text-muted-foreground">
-                          {student.group.name} • {student.studentTicket}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span
-                          className={`shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full font-bold text-base ${ectsColor(ects)}`}
-                        >
-                          {ects}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-primary">
-                      {grade.subject.title}
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div>
-                        <span className="text-muted-foreground text-xs">
-                          Бал
-                        </span>
-                        <p
-                          className={`font-bold text-lg ${scoreColor(grade.score)}`}
-                        >
-                          {grade.score}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground text-xs">
-                          Національна
-                        </span>
-                        <p className="font-medium text-xs">{national}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground text-xs">
-                          Тип
-                        </span>
-                        <p>
-                          <Badge variant="outline" className="text-xs">
-                            {grade.gradeType}
-                          </Badge>
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <span className="text-xs text-muted-foreground">
-                        {formatDateShort(grade.date)}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <EditGradeDialog
-                          grade={{
-                            id: grade.id,
-                            score: grade.score,
-                            gradeType: grade.gradeType,
-                          }}
-                          studentName={student.fullName}
-                          subjectTitle={grade.subject.title}
-                        />
-                        <DeleteGradeButton
-                          gradeId={grade.id}
-                          studentName={student.fullName}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {totalGrades === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Оцінки ще не виставлено</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Grade Journal with Filters */}
+      <GradeJournal rows={rows} />
     </div>
   );
 }
