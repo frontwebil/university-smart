@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GRADE_TYPES } from "@/lib/grades";
 import { PlusCircle, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AddGradeFormProps {
   students: Array<{ id: string; fullName: string }>;
@@ -46,9 +46,17 @@ export function AddGradeForm({ students, subjects }: AddGradeFormProps) {
   const [state, formAction] = useFormState(addGradeAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Controlled state for Select components (Radix Select + Server Actions fix)
+  const [studentId, setStudentId] = useState("");
+  const [subjectId, setSubjectId] = useState("");
+  const [gradeType, setGradeType] = useState("");
+
   useEffect(() => {
     if (state.success) {
       formRef.current?.reset();
+      setStudentId("");
+      setSubjectId("");
+      setGradeType("");
     }
   }, [state]);
 
@@ -62,11 +70,16 @@ export function AddGradeForm({ students, subjects }: AddGradeFormProps) {
       </CardHeader>
       <CardContent>
         <form ref={formRef} action={formAction} className="space-y-4">
+          {/* Hidden inputs for reliable form submission */}
+          <input type="hidden" name="studentId" value={studentId} />
+          <input type="hidden" name="subjectId" value={subjectId} />
+          <input type="hidden" name="gradeType" value={gradeType} />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Студент */}
             <div className="space-y-2">
-              <Label htmlFor="studentId">Студент</Label>
-              <Select name="studentId" required>
+              <Label>Студент</Label>
+              <Select value={studentId} onValueChange={setStudentId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть студента..." />
                 </SelectTrigger>
@@ -82,8 +95,8 @@ export function AddGradeForm({ students, subjects }: AddGradeFormProps) {
 
             {/* Дисципліна */}
             <div className="space-y-2">
-              <Label htmlFor="subjectId">Дисципліна</Label>
-              <Select name="subjectId" required>
+              <Label>Дисципліна</Label>
+              <Select value={subjectId} onValueChange={setSubjectId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть дисципліну..." />
                 </SelectTrigger>
@@ -99,8 +112,8 @@ export function AddGradeForm({ students, subjects }: AddGradeFormProps) {
 
             {/* Тип контролю */}
             <div className="space-y-2">
-              <Label htmlFor="gradeType">Тип контролю</Label>
-              <Select name="gradeType" required>
+              <Label>Тип контролю</Label>
+              <Select value={gradeType} onValueChange={setGradeType}>
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть тип..." />
                 </SelectTrigger>
@@ -116,7 +129,7 @@ export function AddGradeForm({ students, subjects }: AddGradeFormProps) {
 
             {/* Бал */}
             <div className="space-y-2">
-              <Label htmlFor="score">Бал (0-100)</Label>
+              <Label>Бал (0-100)</Label>
               <Input
                 name="score"
                 type="number"

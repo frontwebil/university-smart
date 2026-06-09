@@ -57,6 +57,9 @@ export function EditGradeDialog({
   const initialState: GradeActionState = { success: false };
   const [state, formAction] = useFormState(editGradeAction, initialState);
 
+  // Controlled state for Select (Radix Select + Server Actions fix)
+  const [gradeType, setGradeType] = useState(grade.gradeType);
+
   if (!isOpen) {
     return (
       <Button
@@ -88,6 +91,7 @@ export function EditGradeDialog({
 
         <form action={formAction} className="p-4 space-y-4">
           <input type="hidden" name="gradeId" value={grade.id} />
+          <input type="hidden" name="gradeType" value={gradeType} />
 
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
@@ -100,7 +104,7 @@ export function EditGradeDialog({
 
           <div className="space-y-2">
             <Label>Тип контролю</Label>
-            <Select name="gradeType" defaultValue={grade.gradeType}>
+            <Select value={gradeType} onValueChange={setGradeType}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
