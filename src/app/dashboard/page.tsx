@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentMockUser } from "@/components/mock-user-switcher";
+import { getCurrentMockUser } from "@/lib/mock-auth";
 import { StudentView } from "@/components/student-view";
 import { TeacherView } from "@/components/teacher-view";
 
