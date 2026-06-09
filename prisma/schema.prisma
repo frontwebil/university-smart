@@ -1,0 +1,69 @@
+// University-Smart Management System - Prisma Schema
+// Спрощена схема для MVP прототипу
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Модель Академічної Групи
+model Group {
+  id         String    @id @default(uuid())
+  name       String    // Назва групи (напр., "ІПЗ-22-1")
+  department String    // Факультет / Кафедра
+  students   Student[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("groups")
+}
+
+// Модель Студента
+model Student {
+  id            String  @id @default(uuid())
+  fullName      String  // ПІБ студента
+  studentTicket String  @unique // Номер студентського квитка
+  groupId       String
+  group         Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  grades        Grade[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("students")
+}
+
+// Модель Дисципліни
+model Subject {
+  id          String   @id @default(uuid())
+  title       String   // Назва дисципліни
+  ectsCredits Decimal  // Кредити ЄКТС
+  grades      Grade[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subjects")
+}
+
+// Модель Оцінки
+model Grade {
+  id        String    @id @default(uuid())
+  studentId String
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  score     Int       // Бал від 0 до 100
+  gradeType String    // Тип: МКР, Лабораторна, Практична, Іспит, Залік
+  date      DateTime  @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("grades")
+}
