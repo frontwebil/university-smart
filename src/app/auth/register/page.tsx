@@ -59,7 +59,7 @@ export default function RegisterPage() {
   const initialState: AuthState = { success: false };
   const [state, formAction] = useFormState(registerAction, initialState);
 
-  const [role, setRole] = useState("STUDENT");
+  const [groupId, setGroupId] = useState("");
   const [groups, setGroups] = useState<GroupOption[]>([]);
 
   // Завантажити групи для вибору
@@ -84,13 +84,16 @@ export default function RegisterPage() {
           <div className="mx-auto w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
             <GraduationCap className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl">Реєстрація</CardTitle>
+          <CardTitle className="text-2xl">Реєстрація студента</CardTitle>
           <CardDescription>
             Створіть акаунт у University-Smart
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-4">
+            {/* Роль завжди STUDENT */}
+            <input type="hidden" name="role" value="STUDENT" />
+
             <div className="space-y-2">
               <Label htmlFor="name">Повне ім&apos;я (ПІБ)</Label>
               <Input
@@ -138,53 +141,33 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Роль</Label>
-              <Select
-                name="role"
-                value={role}
-                onValueChange={setRole}
-              >
+              <Label>Академічна група</Label>
+              <input type="hidden" name="groupId" value={groupId} />
+              <Select value={groupId} onValueChange={setGroupId}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Оберіть групу..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STUDENT">👨‍🎓 Студент</SelectItem>
-                  <SelectItem value="TEACHER">👨‍🏫 Викладач</SelectItem>
+                  {groups.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name} — {g.department}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {role === "STUDENT" && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="groupId">Академічна група</Label>
-                  <Select name="groupId" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Оберіть групу..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groups.map((g) => (
-                        <SelectItem key={g.id} value={g.id}>
-                          {g.name} — {g.department}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="studentTicket">
-                    Номер студентського квитка
-                  </Label>
-                  <Input
-                    id="studentTicket"
-                    name="studentTicket"
-                    placeholder="КВ-2024-0001"
-                    required
-                  />
-                </div>
-              </>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="studentTicket">
+                Номер студентського квитка
+              </Label>
+              <Input
+                id="studentTicket"
+                name="studentTicket"
+                placeholder="КВ-2024-0001"
+                required
+              />
+            </div>
 
             {state.error && (
               <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
