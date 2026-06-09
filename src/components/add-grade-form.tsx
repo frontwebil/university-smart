@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { addGradeAction, type AddGradeState } from "@/app/dashboard/actions";
+import { addGradeAction, type GradeActionState } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,7 +42,7 @@ function SubmitButton() {
 }
 
 export function AddGradeForm({ students, subjects }: AddGradeFormProps) {
-  const initialState: AddGradeState = { success: false };
+  const initialState: GradeActionState = { success: false };
   const [state, formAction] = useFormState(addGradeAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 

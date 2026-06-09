@@ -9,28 +9,34 @@
 
 ## ✨ Функціональність
 
+### 🔐 Авторизація
+- Реєстрація нових користувачів (студент / викладач)
+- Вхід через email + пароль (NextAuth.js + Credentials)
+- JWT-сесії, захищені маршрути через middleware
+- Автоматичне перенаправлення на сторінку входу
+
 ### 👨‍🎓 Вигляд студента (Електронна заліковка)
 - Таблиця дисциплін з балами, кредитами ЄКТС
 - Автоматичний розрахунок літерної оцінки ECTS (A–F)
-- Автоматичний розрахунок за національною шкалою (Відмінно / Добре / Задовільно / Незадовільно)
+- Автоматичний розрахунок за національною шкалою
 - Адаптивний дизайн: картки на мобільних, таблиця на десктопі
 - Статистика: кількість дисциплін, середній бал
 
-### 👨‍🏫 Вигляд викладача / деканату
+### 👨‍🏫 Вигляд викладача
 - Журнал оцінок усіх студентів
 - Форма "Додати оцінку" з Server Actions + Prisma
+- ✏️ Редагування оцінок (діалогове вікно)
+- 🗑️ Видалення оцінок (з підтвердженням)
 - Статистика: кількість студентів, середній бал, відмінники
-
-### 🔄 Перемикач ролей (Mock Auth)
-- Dropdown у хедері для швидкого перемикання між ролями
-- Без реальної автентифікації — через query parameter `?mockUser=`
 
 ## 🛠 Технології
 
 - **Next.js 14+** (App Router)
 - **TypeScript**
 - **Tailwind CSS** + **Shadcn UI**
-- **Prisma ORM** + PostgreSQL
+- **Prisma ORM** + PostgreSQL (Supabase)
+- **NextAuth.js** (Credentials provider, JWT)
+- **bcryptjs** для хешування паролів
 - **Server Actions** для запису в БД
 
 ## 🚀 Швидкий старт
@@ -43,12 +49,20 @@ cd university-smart
 npm install
 ```
 
-### 2. Налаштування бази даних
+### 2. Налаштування .env
 
-Створіть файл `.env` у корені проєкту:
+Створіть файл `.env`:
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/university_smart?schema=public"
+DATABASE_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres"
+NEXTAUTH_SECRET="your-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+Згенерувати `NEXTAUTH_SECRET`:
+```bash
+openssl rand -base64 32
 ```
 
 ### 3. Ініціалізація БД та заповнення даними
@@ -58,7 +72,7 @@ npx prisma db push
 npm run db:seed
 ```
 
-### 4. Запуск dev-сервера
+### 4. Запуск
 
 ```bash
 npm run dev
@@ -66,48 +80,60 @@ npm run dev
 
 Відкрийте [http://localhost:3000](http://localhost:3000)
 
+## 🔑 Тестові акаунти
+
+Пароль для всіх: `password123`
+
+| Роль | Email | Ім'я |
+|------|-------|------|
+| 👨‍🏫 Викладач | teacher@usms.edu | Проф. Іваненко О.М. |
+| 👨‍🎓 Студент | petrenko@usms.edu | Петренко Іван |
+| 👩‍🎓 Студент | kovalenko@usms.edu | Коваленко Марія |
+| 👨‍🎓 Студент | shevchenko@usms.edu | Шевченко Андрій |
+| 👩‍🎓 Студент | bondarenko@usms.edu | Бондаренко Олена |
+
 ## 📁 Структура проєкту
 
 ```
 university-smart/
 ├── prisma/
-│   ├── schema.prisma       # Схема БД (Group, Student, Subject, Grade)
-│   └── seed.ts             # Скрипт заповнення mock-даними
+│   ├── schema.prisma       # Схема БД (User, Group, Student, Subject, Grade)
+│   └── seed.ts             # Mock-дані + тестові акаунти
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx      # Кореневий layout
+│   │   ├── layout.tsx
 │   │   ├── page.tsx        # Redirect → /dashboard
-│   │   ├── globals.css     # Глобальні стилі + CSS-змінні
-│   │   └── dashboard/
-│   │       ├── layout.tsx  # Layout з хедером та перемикачем ролей
-│   │       ├── page.tsx    # Головна сторінка (роутинг по ролях)
-│   │       └── actions.ts  # Server Actions (додавання оцінок)
+│   │   ├── globals.css
+│   │   ├── auth/
+│   │   │   ├── login/page.tsx
+│   │   │   ├── register/page.tsx
+│   │   │   └── actions.ts
+│   │   ├── dashboard/
+│   │   │   ├── layout.tsx  # Хедер з інфо юзера + кнопка "Вийти"
+│   │   │   ├── page.tsx    # Роутинг по ролях (сесія)
+│   │   │   └── actions.ts  # CRUD оцінок (add/edit/delete)
+│   │   └── api/
+│   │       ├── auth/[...nextauth]/route.ts
+│   │       └── groups/route.ts
 │   ├── components/
-│   │   ├── ui/             # Shadcn UI компоненти
-│   │   ├── mock-user-switcher.tsx
+│   │   ├── ui/             # Shadcn UI
 │   │   ├── student-view.tsx
 │   │   ├── teacher-view.tsx
-│   │   └── add-grade-form.tsx
-│   └── lib/
-│       ├── prisma.ts       # Singleton Prisma Client
-│       ├── grades.ts       # Утиліти ECTS / Національна шкала
-│       └── utils.ts        # cn(), форматування дат
+│   │   ├── add-grade-form.tsx
+│   │   ├── edit-grade-dialog.tsx
+│   │   ├── delete-grade-button.tsx
+│   │   └── logout-button.tsx
+│   ├── lib/
+│   │   ├── auth.ts         # NextAuth config
+│   │   ├── prisma.ts
+│   │   ├── grades.ts
+│   │   └── utils.ts
+│   ├── middleware.ts        # Захист /dashboard/*
+│   └── types/
+│       └── next-auth.d.ts  # Типи сесії
 ├── .env.example
-├── package.json
 └── README.md
 ```
-
-## 📊 Моделі даних
-
-| Модель    | Опис                          |
-|-----------|-------------------------------|
-| `Group`   | Академічна група (ІПЗ-22-1)  |
-| `Student` | Студент з ПІБ та квитком      |
-| `Subject` | Дисципліна з кредитами ЄКТС   |
-| `Grade`   | Оцінка (0-100) з типом контролю |
-
-### Типи контролю
-`МКР` · `Лабораторна` · `Практична` · `Іспит` · `Залік`
 
 ## 📝 Ліцензія
 

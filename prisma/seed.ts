@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,7 @@ async function main() {
 
   // Очищення існуючих даних
   await prisma.grade.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.student.deleteMany();
   await prisma.subject.deleteMany();
   await prisma.group.deleteMany();
@@ -68,6 +70,60 @@ async function main() {
   });
 
   console.log("✅ Студентів створено:", 4);
+
+  // === Створення Користувачів (акаунти для входу) ===
+  const passwordHash = await bcrypt.hash("password123", 12);
+
+  await prisma.user.create({
+    data: {
+      email: "teacher@usms.edu",
+      passwordHash,
+      name: "Професор Іваненко О.М.",
+      role: "TEACHER",
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "petrenko@usms.edu",
+      passwordHash,
+      name: "Петренко Іван Олександрович",
+      role: "STUDENT",
+      studentId: student1.id,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "kovalenko@usms.edu",
+      passwordHash,
+      name: "Коваленко Марія Петрівна",
+      role: "STUDENT",
+      studentId: student2.id,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "shevchenko@usms.edu",
+      passwordHash,
+      name: "Шевченко Андрій Вікторович",
+      role: "STUDENT",
+      studentId: student3.id,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "bondarenko@usms.edu",
+      passwordHash,
+      name: "Бондаренко Олена Ігорівна",
+      role: "STUDENT",
+      studentId: student4.id,
+    },
+  });
+
+  console.log("✅ Користувачів створено: 5 (1 викладач + 4 студенти)");
 
   // === Створення Дисциплін ===
   const subjectWeb = await prisma.subject.create({
@@ -132,7 +188,15 @@ async function main() {
   }
 
   console.log("✅ Оцінок створено:", gradesData.length);
+  console.log("");
   console.log("🎉 База даних успішно заповнена!");
+  console.log("");
+  console.log("📋 Тестові акаунти (пароль для всіх: password123):");
+  console.log("   👨‍🏫 Викладач:  teacher@usms.edu");
+  console.log("   👨‍🎓 Студент 1: petrenko@usms.edu");
+  console.log("   👩‍🎓 Студент 2: kovalenko@usms.edu");
+  console.log("   👨‍🎓 Студент 3: shevchenko@usms.edu");
+  console.log("   👩‍🎓 Студент 4: bondarenko@usms.edu");
 }
 
 main()

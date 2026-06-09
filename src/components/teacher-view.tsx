@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AddGradeForm } from "@/components/add-grade-form";
+import { EditGradeDialog } from "@/components/edit-grade-dialog";
+import { DeleteGradeButton } from "@/components/delete-grade-button";
 import {
   scoreToEcts,
   scoreToNational,
@@ -82,7 +84,7 @@ export function TeacherView({
       <div className="space-y-1">
         <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <ClipboardList className="h-6 w-6 text-primary" />
-          Панель управління — Викладач / Деканат
+          Панель управління — Викладач
         </h2>
         <p className="text-muted-foreground">
           Перегляд усіх студентів, оцінок та додавання нових результатів
@@ -177,11 +179,14 @@ export function TeacherView({
                   <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Дата
                   </th>
+                  <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Дії
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {students.flatMap((student) =>
-                  student.grades.map((grade, i) => {
+                  student.grades.map((grade) => {
                     const ects = scoreToEcts(grade.score);
                     const national = scoreToNational(grade.score);
                     return (
@@ -228,6 +233,23 @@ export function TeacherView({
                         <td className="p-3 text-center text-sm text-muted-foreground">
                           {formatDateShort(grade.date)}
                         </td>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <EditGradeDialog
+                              grade={{
+                                id: grade.id,
+                                score: grade.score,
+                                gradeType: grade.gradeType,
+                              }}
+                              studentName={student.fullName}
+                              subjectTitle={grade.subject.title}
+                            />
+                            <DeleteGradeButton
+                              gradeId={grade.id}
+                              studentName={student.fullName}
+                            />
+                          </div>
+                        </td>
                       </tr>
                     );
                   })
@@ -256,11 +278,13 @@ export function TeacherView({
                           {student.group.name} • {student.studentTicket}
                         </p>
                       </div>
-                      <span
-                        className={`shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full font-bold text-base ${ectsColor(ects)}`}
-                      >
-                        {ects}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full font-bold text-base ${ectsColor(ects)}`}
+                        >
+                          {ects}
+                        </span>
+                      </div>
                     </div>
                     <div className="text-sm font-medium text-primary">
                       {grade.subject.title}
@@ -293,8 +317,25 @@ export function TeacherView({
                         </p>
                       </div>
                     </div>
-                    <div className="text-xs text-muted-foreground pt-1 border-t">
-                      {formatDateShort(grade.date)}
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className="text-xs text-muted-foreground">
+                        {formatDateShort(grade.date)}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <EditGradeDialog
+                          grade={{
+                            id: grade.id,
+                            score: grade.score,
+                            gradeType: grade.gradeType,
+                          }}
+                          studentName={student.fullName}
+                          subjectTitle={grade.subject.title}
+                        />
+                        <DeleteGradeButton
+                          gradeId={grade.id}
+                          studentName={student.fullName}
+                        />
+                      </div>
                     </div>
                   </div>
                 );

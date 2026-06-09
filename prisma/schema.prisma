@@ -1,5 +1,4 @@
 // University-Smart Management System - Prisma Schema
-// Спрощена схема для MVP прототипу
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +8,28 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+// Роль користувача
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+// Модель Користувача (авторизація)
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(STUDENT)
+  studentId    String?  @unique
+  student      Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
 }
 
 // Модель Академічної Групи
@@ -32,6 +53,7 @@ model Student {
   groupId       String
   group         Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   grades        Grade[]
+  user          User?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -54,14 +76,14 @@ model Subject {
 
 // Модель Оцінки
 model Grade {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   studentId String
-  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   subjectId String
-  subject   Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  score     Int       // Бал від 0 до 100
-  gradeType String    // Тип: МКР, Лабораторна, Практична, Іспит, Залік
-  date      DateTime  @default(now())
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  score     Int      // Бал від 0 до 100
+  gradeType String   // Тип: МКР, Лабораторна, Практична, Іспит, Залік
+  date      DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

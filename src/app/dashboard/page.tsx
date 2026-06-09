@@ -1,23 +1,24 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getCurrentMockUser } from "@/lib/mock-auth";
+import { redirect } from "next/navigation";
 import { StudentView } from "@/components/student-view";
 import { TeacherView } from "@/components/teacher-view";
 
 export const dynamic = "force-dynamic";
 
-interface DashboardPageProps {
-  searchParams: { mockUser?: string };
-}
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
 
-export default async function DashboardPage({
-  searchParams,
-}: DashboardPageProps) {
-  const user = getCurrentMockUser(searchParams);
+  if (!session) {
+    redirect("/auth/login");
+  }
 
-  if (user.isStudent) {
-    // Отримати дані студента з оцінками
+  const { role, studentId } = session.user;
+
+  if (role === "STUDENT" && studentId) {
     const student = await prisma.student.findUnique({
-      where: { id: user.id },
+      where: { id: studentId },
       include: {
         group: true,
         grades: {
@@ -30,7 +31,9 @@ export default async function DashboardPage({
     if (!student) {
       return (
         <div className="text-center py-20">
-          <p className="text-muted-foreground">Студента не знайдено</p>
+          <p className="text-muted-foreground">
+            Профіль студента не знайдено
+          </p>
         </div>
       );
     }
@@ -38,7 +41,7 @@ export default async function DashboardPage({
     return <StudentView student={student} />;
   }
 
-  // Режим викладача / деканату
+  // Режим викладача
   const students = await prisma.student.findMany({
     include: {
       group: true,
