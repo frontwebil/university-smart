@@ -65,12 +65,12 @@ export function GradeJournal({ rows }: GradeJournalProps) {
 
   // Extract unique values for filter dropdowns
   const groups = useMemo(
-    () => [...new Set(rows.map((r) => r.groupName))].sort(),
+    () => Array.from(new Set(rows.map((r) => r.groupName))).sort(),
     [rows]
   );
   const subjects = useMemo(
     () =>
-      [...new Map(rows.map((r) => [r.subjectId, r.subjectTitle])).entries()]
+      Array.from(new Map(rows.map((r) => [r.subjectId, r.subjectTitle])).entries())
         .map(([id, title]) => ({ id, title }))
         .sort((a, b) => a.title.localeCompare(b.title, "uk")),
     [rows]
